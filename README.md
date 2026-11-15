@@ -1,4 +1,4 @@
-#  WatchTower
+<img width="1440" height="814" alt="Screenshot 2026-11-15 at 7 20 43 PM" src="https://github.com/user-attachments/assets/7af39454-a8f8-4c93-b819-f189fe9cefa8" />#  WatchTower
 
 A self-hosted operations monitor in Python that watches **your machine, your APIs and your AWS account** from one dashboard, raises de-duplicated alerts, and adds a small, explainable AIOps layer on top.
 
@@ -67,6 +67,7 @@ services:
       target: 99.9        # percent of checks that must succeed
       window_days: 7      # rolling window; cannot exceed retention_days
 ```
+<img width="1440" height="814" alt="Screenshot 2026-11-15 at 7 20 43 PM" src="https://github.com/user-attachments/assets/6699ad60-a328-40ad-91ab-7d73f6739597" />
 
 The SLI is the share of health checks that succeed. 99.9% over 7 days at one check per 30 s allows about 20 failed checks, and that count is the error budget. The **SLOs** tab shows availability, budget left, burn rates and a projected exhaustion time.
 
