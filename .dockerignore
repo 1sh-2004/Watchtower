@@ -1,0 +1,12 @@
+.git
+.github
+tests
+__pycache__
+*.pyc
+*.db
+*.db-wal
+*.db-shm
+sentinel.yaml
+.env
+.pytest_cache
+sentinel.settings.json

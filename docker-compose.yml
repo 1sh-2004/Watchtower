@@ -1,0 +1,53 @@
+services:
+  sentinel:
+    build: .
+    container_name: sentinel
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"   # published to localhost only; put a reverse proxy with auth in front to expose it
+    environment:
+      SENTINEL_CONFIG: /config/sentinel.yaml
+      # The Settings tab only accepts requests from this machine. Inside Docker the host's connection arrives
+      # from the bridge address, so trust it: safe only because the port below is published to 127.0.0.1.
+      SENTINEL_SETTINGS_TRUST_NETWORK: "1"
+      # Secrets come from your shell or an .env file (never commit it). Names must match the config.
+      EXAMPLE_API_KEY: ${EXAMPLE_API_KEY:-}
+      SENTINEL_WEBHOOK_URL: ${SENTINEL_WEBHOOK_URL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # AWS: prefer an IAM role; for local use pass read-only keys via env or mount ~/.aws read-only.
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-ap-south-1}
+    volumes:
+      - sentinel-data:/data
+      - ./sentinel.yaml:/config/sentinel.yaml:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+
+  # Optional Prometheus + Grafana, started with:  docker compose --profile monitoring up
+  prometheus:
+    profiles: [monitoring]
+    image: prom/prometheus:v3.0.1
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+    depends_on: [sentinel]
+
+  grafana:
+    profiles: [monitoring]
+    image: grafana/grafana:11.3.1
+    ports:
+      - "127.0.0.1:3000:3000"     # login admin / admin, change it on first use
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on: [prometheus]
+
+volumes:
+  sentinel-data:

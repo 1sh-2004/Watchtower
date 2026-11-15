@@ -1,0 +1,63 @@
+# Sentinel configuration. Copy to sentinel.yaml and edit.
+#
+# SECRETS NEVER GO IN THIS FILE. Where a credential is needed you give the
+# NAME of an environment variable; Sentinel reads it at runtime and never
+# stores, logs or displays it. A literal key value is rejected on startup.
+
+interval_seconds: 5        # how often local metrics are sampled
+retention_days: 7          # history older than this is pruned hourly
+
+thresholds:
+  cpu: 80
+  ram: 85
+  disk: 90
+  sustained_samples: 3     # must be over threshold this many samples in a row to alert
+  resolve_samples: 3       # and back under it this many samples in a row to resolve (stops flapping)
+  disk_io_min_mbps: 20     # alert on a sustained disk I/O jump of at least this much above its own
+                           # recent baseline; 0 turns the I/O alert off
+
+services:
+  - name: Public website
+    url: https://example.com
+    interval_seconds: 30
+    latency_warn_ms: 1500
+    failures_before_alert: 2
+    slo:
+      target: 99.9               # percent of checks that must succeed
+      window_days: 7             # rolling window; cannot exceed retention_days
+
+  - name: Example REST API
+    url: https://api.example.com/v1/health
+    expected_status: [200, 204]
+    timeout: 5
+    api_key:
+      env: EXAMPLE_API_KEY        # name of the env var holding the key
+      header: Authorization
+      scheme: Bearer
+      expires_on: 2027-06-30      # reminder only; the key itself is never stored
+
+incidents:
+  window_seconds: 300             # alerts opening within this gap of each other are grouped into one incident
+
+metrics:
+  enabled: true                   # Prometheus endpoint at /metrics (no auth: keep it on localhost or behind a proxy)
+
+aws:
+  enabled: false                  # set true after configuring read-only credentials
+  regions: [ap-south-1]           # allow-list: running instances elsewhere raise a critical alert
+  profile: null                   # optional AWS CLI profile name
+  monthly_budget_usd: 50          # 0 disables budget alerts
+  budget_warn_pct: 80
+  idle_cpu_percent: 5             # running EC2 averaging less than this is flagged idle
+  idle_days: 7
+  interval_minutes: 360           # Cost Explorer bills ~$0.01 per request; keep this slow
+
+alerts:
+  webhook_env: SENTINEL_WEBHOOK_URL   # env var holding a Slack/Teams/generic webhook URL
+  expiry_warn_days: 14
+  quota_warn_pct: 10
+
+ai:
+  llm_summary: false              # opt-in. When true, only anonymised counts are sent
+  model: claude-sonnet-5-5
+  api_key_env: ANTHROPIC_API_KEY

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel - Operations Monitor</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/vendor/chart.umd.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ Sentinel</h1>
+            <p class="subtitle">Systems, APIs and cloud: one operations view</p>
+            <div class="uptime" id="uptime">Uptime: Loading...</div>
+        </header>
+
+        <!-- Open alerts banner -->
+        <div id="alerts-container" aria-live="polite"></div>
+
+        <nav class="tabs" role="tablist">
+            <button class="tab active" data-tab="overview" role="tab">Overview</button>
+            <button class="tab" data-tab="services" role="tab">Services</button>
+            <button class="tab" data-tab="cloud" role="tab">Cloud</button>
+            <button class="tab" data-tab="slo" role="tab">SLOs</button>
+            <button class="tab" data-tab="incidents" role="tab">Incidents</button>
+            <button class="tab" data-tab="insights" role="tab">Insights</button>
+            <button class="tab" data-tab="alerts" role="tab">Alert history</button>
+            <button class="tab" data-tab="settings" role="tab">Settings</button>
+        </nav>
+
+        <!-- OVERVIEW -->
+        <main id="tab-overview" class="tab-panel active">
+            <section class="stats-grid">
+                <div class="stat-card"><div class="stat-icon">💻</div><div class="stat-info">
+                    <h3>CPU Usage</h3><div class="stat-value" id="cpu-percent">--</div>
+                    <div class="stat-detail" id="cpu-cores">-- cores</div></div></div>
+                <div class="stat-card"><div class="stat-icon">🧠</div><div class="stat-info">
+                    <h3>Memory</h3><div class="stat-value" id="ram-percent">--</div>
+                    <div class="stat-detail" id="ram-usage">-- / -- GB</div></div></div>
+                <div class="stat-card"><div class="stat-icon">💾</div><div class="stat-info">
+                    <h3>Disk Space</h3><div class="stat-value" id="disk-percent">--</div>
+                    <div class="stat-detail" id="disk-usage">-- / -- GB</div></div></div>
+                <div class="stat-card"><div class="stat-icon">⚡</div><div class="stat-info">
+                    <h3>Processes</h3><div class="stat-value" id="process-count">--</div>
+                    <div class="stat-detail">active processes</div></div></div>
+                <div class="stat-card"><div class="stat-icon">📀</div><div class="stat-info">
+                    <h3>Disk I/O</h3><div class="stat-value small" id="disk-io">--</div>
+                    <div class="stat-detail">read / write per second</div></div></div>
+                <div class="stat-card"><div class="stat-icon">🌐</div><div class="stat-info">
+                    <h3>Network</h3><div class="stat-value small" id="net-io">--</div>
+                    <div class="stat-detail">download / upload per second</div></div></div>
+                <div class="stat-card"><div class="stat-icon">🎮</div><div class="stat-info">
+                    <h3>GPU</h3><div class="stat-value small" id="gpu-util">--</div>
+                    <div class="stat-detail" id="gpu-detail">checking...</div></div></div>
+            </section>
+
+            <section class="panel">
+                <h2>Utilisation trends</h2>
+                <div class="chart-controls">
+                    <button class="time-btn active" data-hours="1">1 Hour</button>
+                    <button class="time-btn" data-hours="6">6 Hours</button>
+                    <button class="time-btn" data-hours="24">24 Hours</button>
+                    <button class="time-btn" data-hours="168">7 Days</button>
+                </div>
+                <div class="chart-container"><canvas id="metricsChart"></canvas></div>
+            </section>
+
+            <section class="panel">
+                <h2>Disk and network throughput</h2>
+                <div class="chart-container"><canvas id="ioChart"></canvas></div>
+            </section>
+
+            <section class="panel">
+                <h2>Top processes</h2>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>PID</th><th>Name</th><th>CPU %</th><th>Memory %</th></tr></thead>
+                        <tbody id="processes-body"><tr><td colspan="4">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <!-- SERVICES -->
+        <main id="tab-services" class="tab-panel">
+            <section class="panel">
+                <h2>API and service health</h2>
+                <p class="hint">Availability, latency and errors for each configured endpoint. Request counts are
+                   checks made by Sentinel. Quota appears only when the provider sends rate-limit headers.
+                   Add or change services in the Settings tab. Keys are never shown; only whether one is set and its expiry date.</p>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Service</th><th>Status</th><th>Latency</th><th>Uptime 24h</th>
+                            <th>p95 24h</th><th>Checks / errors 24h</th><th>Quota left</th><th>API key</th></tr></thead>
+                        <tbody id="services-body"><tr><td colspan="8">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <!-- CLOUD -->
+        <main id="tab-cloud" class="tab-panel">
+            <div id="cloud-content"><section class="panel"><p>Loading...</p></section></div>
+        </main>
+
+        <!-- SLOs -->
+        <main id="tab-slo" class="tab-panel">
+            <div id="slo-content"><section class="panel"><p>Loading...</p></section></div>
+        </main>
+
+        <!-- INCIDENTS -->
+        <main id="tab-incidents" class="tab-panel">
+            <div id="incidents-content"><section class="panel"><p>Loading...</p></section></div>
+        </main>
+
+        <!-- INSIGHTS -->
+        <main id="tab-insights" class="tab-panel">
+            <section class="panel">
+                <h2>Operational summary <span class="badge" id="summary-source"></span></h2>
+                <p id="summary-text" class="summary">Loading...</p>
+                <p class="hint" id="summary-note"></p>
+            </section>
+            <section class="panel">
+                <h2>Unusual behaviour</h2>
+                <ul class="plain-list" id="anomaly-list"><li>Loading...</li></ul>
+            </section>
+            <section class="panel">
+                <h2>Capacity forecast</h2>
+                <ul class="plain-list" id="forecast-list"><li>Loading...</li></ul>
+            </section>
+        </main>
+
+        <!-- ALERT HISTORY -->
+        <main id="tab-alerts" class="tab-panel">
+            <section class="panel">
+                <h2>Alert history</h2>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Status</th><th>Severity</th><th>Source</th><th>Message</th>
+                            <th>First seen</th><th>Last seen</th><th>Count</th></tr></thead>
+                        <tbody id="alert-history-body"><tr><td colspan="7">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <!-- SETTINGS -->
+        <main id="tab-settings" class="tab-panel">
+            <div id="settings-locked" class="panel" hidden>
+                <h2>Settings are locked</h2>
+                <p class="hint" id="settings-locked-msg"></p>
+            </div>
+            <div id="settings-body">
+            <section class="panel">
+                <h2>APIs and services</h2>
+                <p class="hint">Everything here is checked on its own schedule. A service that needs a key gets the key
+                   sent with each check; leave the key off to check an open endpoint. Services from
+                   <code>sentinel.yaml</code> are listed too but can only be changed in that file.</p>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Service</th><th>From</th><th>Key</th><th>Every</th><th></th></tr></thead>
+                        <tbody id="settings-services-body"><tr><td colspan="5">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel">
+                <h2 id="svc-form-title">Add an API or service</h2>
+                <form id="svc-form" autocomplete="off" novalidate>
+                    <div class="form-grid">
+                        <label class="field">Name<input id="f-name" required maxlength="80" placeholder="Payments API"></label>
+                        <label class="field wide">URL to check<input id="f-url" required placeholder="https://api.example.com/v1/health"></label>
+                        <label class="field">Method<select id="f-method"><option>GET</option><option>HEAD</option><option>POST</option></select></label>
+                        <label class="field">Check every (seconds)<input id="f-interval" type="number" min="1" value="30"></label>
+                        <label class="field">Slow above (ms)<input id="f-slow" type="number" min="1" value="1000"></label>
+                        <label class="field">Failures before alert<input id="f-fails" type="number" min="1" value="2"></label>
+                        <label class="field">Healthy status codes<input id="f-status" value="200" placeholder="200, 204"></label>
+                        <label class="field">Availability goal % (optional)<input id="f-slo" type="number" min="1" max="99.999" step="0.1" placeholder="99.9"></label>
+                        <label class="field">...measured over (days)<input id="f-slodays" type="number" min="1" value="7"></label>
+                    </div>
+                    <label class="check"><input type="checkbox" id="f-usekey"> This API needs a key</label>
+                    <div id="key-fields" class="form-grid" hidden>
+                        <label class="field wide">API key<input id="f-key" type="password" autocomplete="new-password" spellcheck="false" placeholder="paste the key"></label>
+                        <label class="field">Header<input id="f-header" value="Authorization"></label>
+                        <label class="field">Scheme (blank for none)<input id="f-scheme" value="Bearer"></label>
+                        <label class="field">Key expires on (optional)<input id="f-expires" type="date"></label>
+                    </div>
+                    <p class="hint" id="key-hint" hidden></p>
+                    <div class="btn-row">
+                        <button type="button" class="btn" id="svc-test">Test once</button>
+                        <button type="submit" class="btn primary" id="svc-save">Save and start monitoring</button>
+                        <button type="button" class="btn" id="svc-cancel" hidden>Cancel edit</button>
+                    </div>
+                    <div id="svc-msg" class="form-msg" role="status" aria-live="polite"></div>
+                </form>
+            </section>
+
+            <section class="panel">
+                <h2>AWS</h2>
+                <p class="hint" id="aws-status"></p>
+                <form id="aws-form" autocomplete="off" novalidate>
+                    <label class="check"><input type="checkbox" id="a-enabled" checked> Monitor AWS</label>
+                    <div class="form-grid">
+                        <label class="field wide">Regions to watch (comma separated)<input id="a-regions" placeholder="ap-south-1, us-east-1"></label>
+                        <label class="field">Access key ID<input id="a-keyid" placeholder="AKIA..." spellcheck="false"></label>
+                        <label class="field">Secret access key<input id="a-secret" type="password" autocomplete="new-password" spellcheck="false"></label>
+                        <label class="field">Session token (temporary keys only)<input id="a-token" type="password" autocomplete="new-password" spellcheck="false"></label>
+                        <label class="field">Monthly budget (USD, 0 = off)<input id="a-budget" type="number" min="0" step="1" value="0"></label>
+                        <label class="field">Warn at (% of budget)<input id="a-warn" type="number" min="1" value="80"></label>
+                        <label class="field">Idle EC2 below (% CPU)<input id="a-idlecpu" type="number" min="0" step="0.5" value="5"></label>
+                        <label class="field">...averaged over (days)<input id="a-idledays" type="number" min="1" value="7"></label>
+                        <label class="field">Refresh every (minutes)<input id="a-interval" type="number" min="1" value="360"></label>
+                        <label class="field">AWS CLI profile (optional)<input id="a-profile" placeholder="only if no keys entered"></label>
+                    </div>
+                    <label class="check"><input type="checkbox" id="a-useenv"> Ignore saved keys and use my AWS profile / environment variables / instance role</label>
+                    <p class="hint">Use read-only keys: create an IAM user with <code>infra/aws-readonly-policy.json</code>. Sentinel only
+                       lists and reads; it never starts, stops or deletes anything. Leave the key fields blank to keep keys you saved earlier.
+                       Cost Explorer charges about $0.01 per request, so spend refreshes on the interval above.</p>
+                    <div class="btn-row">
+                        <button type="button" class="btn" id="aws-test">Test connection</button>
+                        <button type="submit" class="btn primary">Save and start monitoring</button>
+                        <button type="button" class="btn danger" id="aws-reset">Remove saved AWS settings</button>
+                    </div>
+                    <div id="aws-msg" class="form-msg" role="status" aria-live="polite"></div>
+                </form>
+            </section>
+            <section class="panel">
+                <p class="hint" style="margin:0">Keys you enter are saved in <code>sentinel.settings.json</code> next to the database (owner-only
+                   permissions), sent only to the service or to AWS, and never shown again. This tab only works from the machine Sentinel runs on.</p>
+            </section>
+            </div>
+        </main>
+
+        <footer>
+            <p>Sentinel - self-hosted monitoring • Data stays on your machine</p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
