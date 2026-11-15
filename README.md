@@ -1,4 +1,4 @@
-# 🛡️ Sentinel
+#  WatchTower
 
 A self-hosted operations monitor in Python that watches **your machine, your APIs and your AWS account** from one dashboard, raises de-duplicated alerts, and adds a small, explainable AIOps layer on top.
 
